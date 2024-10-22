@@ -31,13 +31,16 @@ class SicoobSpider(scrapy.Spider):
                 yield response.follow(article_link, self.parse_article)
 
         # Paginação - Seguir para a próxima página, se existir
-        next_page = response.css('.pagination-bar ul.pagination li.page-item a.page-link::attr(href)').getall()[-1]
+        next_page = response.css('.pagination-bar ul.pagination li.page-item a.page-link::attr(href)').getall()
 
-        if next_page is not None:
-            # Usando urljoin para garantir que a URL tenha o esquema correto
-            next_page_url = urljoin(response.url, next_page)
-            #print(f"Seguindo para a próxima página: {next_page_url}")  # Debug para verificar a URL
-            yield response.follow(next_page_url, self.parse_article)
+        for next in next_page:
+            if next and not next.startswith('javascript:;'):
+                # Garantir que a URL da página seja válida
+                next_page_url = urljoin(response.url, next)
+                # print(f"Seguindo para a próxima página: {next_page_url}")  # Debug para verificar a URL
+                # Seguir para a próxima página chamando a própria função 'parse'
+                yield response.follow(next_page_url, self.parse)
+
             
     def parse_article(self, response):
 
